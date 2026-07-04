@@ -38,7 +38,11 @@ export default function Awardees() {
     remarks: "",
   });
 
-  const [awardees, setAwardees] = useAwardees();
+  const [awardees, setAwardees] = React.useState<Awardee[]>([]);
+
+    React.useEffect(() => {
+          awardeeService.list().then(setAwardees).catch(() => setAwardees([]));
+    }, []);
 
   async function importFile(file: File) {
     try {
