@@ -178,9 +178,10 @@ function createAwardeeRecord(data: Partial<Awardee>, index: number): Awardee {
 function normalizeImportRow(row: Record<string, unknown>, index: number): Awardee {
       const name = readCell(row, ["Awardee Name", "Name", "Student Name", "Candidate Name", "Full Name", "Applicant Name"]);
       const email = readCell(row, ["Email ID", "Email", "Email Address", "Mail ID", "E-mail", "Student Email"]);
-      const phone = readCell(row, ["Phone Number", "Phone", "Mobile", "Mobile Number", "Contact Number", "Contact No", "Phone No", "Student Mobile", "Student Phone", "Whatsapp Number", "WhatsApp No"]);
+      const phone = readCell(row, ["Phone Number", "Phone", "Mobile", "Mobile Number", "Contact Number", "Contact No", "Phone No", "Student Mobile", "Student Phone", "Whatsapp Number", "WhatsApp No", "PH NUMBER1"]);
       const id = readCell(row, ["Hall Ticket Number", "Hall Ticket No", "Hallticket Number", "Student ID", "Application ID", "Unique ID", "ID", "Roll Number", "Roll No", "Registration Number", "Reg No"]) || `HU-2026-IMP-${String(index + 1).padStart(4, "0")}`;
-      const percentage = Number(readCell(row, ["Percentage", "%", "Marks Percentage", "Aggregate", "Score", "CGPA"])) || 0;
+      const rawPercentage = Number(readCell(row, ["Percentage", "%", "Marks Percentage", "Aggregate", "Score", "CGPA", "Marks"])) || 0;
+            const percentage = rawPercentage > 100 ? rawPercentage / 10 : rawPercentage;
       const categoryValue = readCell(row, ["Award Category", "Category", "Award", "Award Type"]);
       const awardCategory = categories.find((category) => category.toLowerCase() === categoryValue.toLowerCase()) ?? categoryFromPercentage(percentage);
       const status = readCell(row, ["Status", "Registration Status", "Registered Status", "Attendance Status", "Check In Status", "Check-in Status"]).toLowerCase();
@@ -191,8 +192,8 @@ function normalizeImportRow(row: Record<string, unknown>, index: number): Awarde
           name,
           email,
           phone,
-          college: readCell(row, ["College Name", "College", "Institute", "Institution", "University", "School Name", "School"]),
-          course: readCell(row, ["Course / Stream", "Course", "Stream", "Branch", "Program", "Programme", "Class", "Year"]),
+          college: readCell(row, ["College Name", "College", "Institute", "Institution", "University", "School Name", "School", "Branch"]),
+          course: readCell(row, ["Course / Stream", "Course", "Stream", "Program", "Programme", "Class", "Year"]),
           percentage,
           awardCategory,
           district: readCell(row, ["District", "District Name", "City", "Town", "Mandal"]),
@@ -203,7 +204,7 @@ function normalizeImportRow(row: Record<string, unknown>, index: number): Awarde
           parentsCount: Number(readCell(row, ["Number of Parents", "Parents", "Parents Count", "Parent Count", "No of Parents", "No. of Parents", "Family Members", "Family Members Attended", "No of Family Members", "No. of Family Members"])) || 0,
           guestsCount: Number(readCell(row, ["Number of Guests", "Guests", "Guests Count", "Guest Count", "No of Guests", "No. of Guests", "Others Count", "Other Members"])) || 0,
           parentName: readCell(row, ["Parent Name", "Guardian Name", "Father Name", "Mother Name", "Father/Mother Name", "Parent/Guardian Name"]),
-          parentPhone: readCell(row, ["Parent Phone Number", "Parent Phone", "Guardian Phone", "Parent Mobile", "Guardian Mobile", "Father Mobile", "Mother Mobile", "Parent Contact Number"]),
+          parentPhone: readCell(row, ["Parent Phone Number", "Parent Phone", "Guardian Phone", "Parent Mobile", "Guardian Mobile", "Father Mobile", "Mother Mobile", "Parent Contact Number", "PH NUMBER2"]),
           address: readCell(row, ["Address", "Full Address", "Residential Address", "Permanent Address", "Communication Address", "Student Address", "Village Address", "Location"]),
           remarks: readCell(row, ["Remarks", "Notes", "Comments", "Remark"]),
           checkedInBy: readCell(row, ["Registered By", "Checked-in By", "Checked In By", "Check In By"]) || undefined,
