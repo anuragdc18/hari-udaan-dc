@@ -212,4 +212,3 @@ function normalizeImportRow(row: Record<string, unknown>, index: number): Awarde
           certificateIssuedAt: readCell(row, ["Certificate Issued Time", "Issue Time", "Issued At"]) || undefined,
   }, index);
 }
-}
