@@ -12,7 +12,6 @@ import { RegBadge, CertBadge, CategoryBadge, FlagBadge } from "@/components/badg
 import { DISTRICTS, AWARD_CATEGORIES } from "@/lib/constants";
 import { awardeeService } from "@/services/awardeeService";
 import type { Awardee } from "@/types";
-import { useAwardees } from "@/hooks/use-awardees";
 
 export default function Awardees() {
   const [, navigate] = useLocation();
