@@ -10,7 +10,6 @@ import { getCurrentUser } from "@/lib/session";
 import { awardeeService } from "@/services/awardeeService";
 import { registrationService } from "@/services/registrationService";
 import { fmtDate, fmtTime } from "@/lib/format";
-import { useAwardees } from "@/hooks/use-awardees";
 import type { Awardee } from "@/types";
 
 export default function RegistrationDesk() {
@@ -45,7 +44,11 @@ export default function RegistrationDesk() {
   const familyMembers = parents + guests;
   const totalEntered = (attended ? 1 : 0) + familyMembers;
 
-  const [awardees, setAwardees] = useAwardees();
+  const [awardees, setAwardees] = React.useState<Awardee[]>([]);
+
+    React.useEffect(() => {
+          awardeeService.list().then(setAwardees).catch(() => setAwardees([]));
+    }, []);
 
   const results = React.useMemo(() => {
     const ql = q.toLowerCase().trim();
