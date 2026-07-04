@@ -18,8 +18,8 @@ import {
 } from "@/lib/derive";
 import { EVENT } from "@/lib/constants";
 import { fmtTime } from "@/lib/format";
-import { awardeeService } from "@/services/awardeeService";
-import type { ActivityItem, Awardee } from "@/types";
+import { useAwardees } from "@/hooks/use-awardees";
+import type { ActivityItem } from "@/types";
 
 const activity: ActivityItem[] = [];
 
@@ -32,10 +32,7 @@ const tooltipStyle = {
 };
 
 export default function Dashboard() {
-  const [awardees, setAwardees] = React.useState<Awardee[]>([]);
-  React.useEffect(() => {
-    awardeeService.list().then(setAwardees).catch(() => setAwardees([]));
-  }, []);
+  const [awardees] = useAwardees();
 
   const stats = React.useMemo(() => computeStats(awardees), [awardees]);
   const regProg = React.useMemo(() => registrationProgress(awardees), [awardees]);
