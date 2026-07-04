@@ -12,6 +12,7 @@ import { RegBadge, CertBadge, CategoryBadge, FlagBadge } from "@/components/badg
 import { DISTRICTS, AWARD_CATEGORIES } from "@/lib/constants";
 import { awardeeService } from "@/services/awardeeService";
 import type { Awardee } from "@/types";
+import { useAwardees } from "@/hooks/use-awardees";
 
 export default function Awardees() {
   const [, navigate] = useLocation();
@@ -21,7 +22,6 @@ export default function Awardees() {
   const [district, setDistrict] = React.useState("");
   const [category, setCategory] = React.useState("");
   const [reg, setReg] = React.useState("");
-  const [awardees, setAwardees] = React.useState<Awardee[]>([]);
   const [manageOpen, setManageOpen] = React.useState(false);
   const [selectedAwardee, setSelectedAwardee] = React.useState<Awardee | null>(null);
   const [editForm, setEditForm] = React.useState({
@@ -38,9 +38,7 @@ export default function Awardees() {
     remarks: "",
   });
 
-  React.useEffect(() => {
-    awardeeService.list().then(setAwardees).catch(() => setAwardees([]));
-  }, []);
+  const [awardees, setAwardees] = useAwardees();
 
   async function importFile(file: File) {
     try {
