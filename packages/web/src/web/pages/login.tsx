@@ -70,7 +70,7 @@ export default function Login() {
           </div>
         </motion.div>
 
-        <p className="relative text-[12px] text-white/40">2026 {EVENT.org}</p>
+        <p className="relative text-[12px] text-white/40">2026 {EVENT.org} &middot; {EVENT.date} &middot; {EVENT.venue}</p>
       </div>
 
       <div className="flex flex-1 items-center justify-center bg-background px-6 py-10">
