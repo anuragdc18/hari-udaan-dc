@@ -9,7 +9,6 @@ import { getCurrentUser } from "@/lib/session";
 import { awardeeService } from "@/services/awardeeService";
 import { certificateService } from "@/services/certificateService";
 import { fmtDate, fmtTime } from "@/lib/format";
-import { useAwardees } from "@/hooks/use-awardees";
 import type { Awardee } from "@/types";
 
 const awardCategories: Awardee["awardCategory"][] = ["Topper Award", "Gold Merit", "Silver Merit", "Bronze Merit", "Excellence Award"];
@@ -37,7 +36,11 @@ export default function CertificateDesk() {
   });
   const currentUser = getCurrentUser();
 
-  const [awardees, setAwardees] = useAwardees();
+  const [awardees, setAwardees] = React.useState<Awardee[]>([]);
+
+    React.useEffect(() => {
+          awardeeService.list().then(setAwardees).catch(() => setAwardees([]));
+    }, []);
 
   const results = React.useMemo(() => {
     const ql = q.toLowerCase().trim();
