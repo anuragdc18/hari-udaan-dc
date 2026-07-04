@@ -53,7 +53,12 @@ export default function RegistrationDesk() {
   const results = React.useMemo(() => {
     const ql = q.toLowerCase().trim();
     if (!ql) return awardees.slice(0, 6);
-    return awardees.filter((a) => a.name.toLowerCase().includes(ql) || a.id.toLowerCase().includes(ql) || a.phone.includes(ql) || a.email.toLowerCase().includes(ql)).slice(0, 8);
+    const qDigits = q.replace(/\D/g, "");
+        return awardees.filter((a) => {
+                const phoneDigits = a.phone.replace(/\D/g, "");
+                const parentPhoneDigits = (a.parentPhone || "").replace(/\D/g, "");
+                return a.name.toLowerCase().includes(ql) || a.id.toLowerCase().includes(ql) || a.email.toLowerCase().includes(ql) || (qDigits.length > 0 && (phoneDigits.includes(qDigits) || parentPhoneDigits.includes(qDigits)));
+        }).slice(0, 8);
   }, [awardees, q]);
 
   function selectAwardee(a: Awardee) {
