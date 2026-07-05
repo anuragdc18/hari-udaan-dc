@@ -33,9 +33,12 @@ const tooltipStyle = {
 
 export default function Dashboard() {
   const [awardees, setAwardees] = React.useState<Awardee[]>([]);
-    React.useEffect(() => {
-          awardeeService.list().then(setAwardees).catch(() => setAwardees([]));
-    }, []);
+React.useEffect(() => {
+        const load = () => awardeeService.list().then(setAwardees).catch(() => setAwardees([]));
+        load();
+        const interval = setInterval(load, 15000);
+        return () => clearInterval(interval);
+}, []);
 
   const stats = React.useMemo(() => computeStats(awardees), [awardees]);
   const regProg = React.useMemo(() => registrationProgress(awardees), [awardees]);
