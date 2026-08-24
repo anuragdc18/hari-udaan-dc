@@ -5,7 +5,7 @@ export const EVENT = {
   subtitle: "State Merit Excellence Awards",
   org: "HARI University, Kanha Shanti Vanam, Hyderabad",
   date: "5 July 2026",
-  venue: "Shri Ram Chandra Mission, Ganesh Nagar, Near C-Camp, Kurnool",
+  venue: "Sree Srinivas Conventions, Opposite Aparna Amaravathi One Road, Kunchanapalli, Tadepalli, Vijayawada",
 };
 
 export const DISTRICTS = [
