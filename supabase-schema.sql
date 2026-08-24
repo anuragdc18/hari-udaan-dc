@@ -7,6 +7,16 @@ create table if not exists public.crm_app_state (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.crm_awardees (
+  id text primary key,
+  data jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists crm_awardees_created_at_idx
+on public.crm_awardees (created_at desc);
+
 insert into public.crm_app_state (id, data)
 values ('hari-udaan-2026', '{"awardees":[],"users":[],"credentials":{}}'::jsonb)
 on conflict (id) do nothing;
@@ -32,6 +42,15 @@ with check (id = 'hari-udaan-2026');
 
 grant usage on schema public to anon;
 grant select, insert, update on public.crm_app_state to anon;
+
+alter table public.crm_awardees enable row level security;
+
+drop policy if exists "crm_awardees_service_role_all" on public.crm_awardees;
+create policy "crm_awardees_service_role_all"
+on public.crm_awardees
+for all
+using (auth.role() = 'service_role')
+with check (auth.role() = 'service_role');
 
 -- If you want to reset all CRM records later, run:
 -- update public.crm_app_state

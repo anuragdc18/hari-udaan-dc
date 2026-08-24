@@ -7,16 +7,25 @@ import { AppShell, PageTransition } from "./components/app-shell";
 import { canAccessPath, getStoredUser, homeForRole } from "./lib/session";
 
 import Login from "./pages/login";
-import Dashboard from "./pages/dashboard";
-import Awardees from "./pages/awardees";
-import StudentDetails from "./pages/student-details";
-import RegistrationDesk from "./pages/registration-desk";
-import CertificateDesk from "./pages/certificate-desk";
-import Reports from "./pages/reports";
-import Users from "./pages/users";
-import Settings from "./pages/settings";
-import Profile from "./pages/profile";
-import NotFound from "./pages/not-found";
+
+const Dashboard = React.lazy(() => import("./pages/dashboard"));
+const Awardees = React.lazy(() => import("./pages/awardees"));
+const StudentDetails = React.lazy(() => import("./pages/student-details"));
+const RegistrationDesk = React.lazy(() => import("./pages/registration-desk"));
+const CertificateDesk = React.lazy(() => import("./pages/certificate-desk"));
+const Reports = React.lazy(() => import("./pages/reports"));
+const Users = React.lazy(() => import("./pages/users"));
+const Settings = React.lazy(() => import("./pages/settings"));
+const Profile = React.lazy(() => import("./pages/profile"));
+const NotFound = React.lazy(() => import("./pages/not-found"));
+
+function PageLoading() {
+  return (
+    <div className="flex min-h-[360px] items-center justify-center text-sm text-muted-foreground">
+      Loading...
+    </div>
+  );
+}
 
 function Shell() {
   const [location, navigate] = useLocation();
@@ -37,18 +46,20 @@ function Shell() {
   return (
     <AppShell>
       <PageTransition key={location}>
-        <Switch>
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/awardees" component={Awardees} />
-          <Route path="/awardees/:id" component={StudentDetails} />
-          <Route path="/registration" component={RegistrationDesk} />
-          <Route path="/certificate" component={CertificateDesk} />
-          <Route path="/reports" component={Reports} />
-          <Route path="/users" component={Users} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/profile" component={Profile} />
-          <Route component={NotFound} />
-        </Switch>
+        <React.Suspense fallback={<PageLoading />}>
+          <Switch>
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/awardees" component={Awardees} />
+            <Route path="/awardees/:id" component={StudentDetails} />
+            <Route path="/registration" component={RegistrationDesk} />
+            <Route path="/certificate" component={CertificateDesk} />
+            <Route path="/reports" component={Reports} />
+            <Route path="/users" component={Users} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/profile" component={Profile} />
+            <Route component={NotFound} />
+          </Switch>
+        </React.Suspense>
       </PageTransition>
     </AppShell>
   );

@@ -72,14 +72,14 @@ export const awardeeService = {
                         const state = await readSharedCrmState();
                         const seenIds = new Set(state.awardees.map((awardee) => awardee.id.toLowerCase()));
                         const seenEmails = new Set(state.awardees.map((awardee) => awardee.email.toLowerCase()).filter(Boolean));
-                                  const seenPhones = new Set(state.awardees.map((awardee) => awardee.phone.replace(/\D/g, "")).filter(Boolean));
+                                  const seenPhones = new Set(state.awardees.flatMap(phoneKeysForAwardee));
                         const imported: Awardee[] = [];
                         const duplicates: Awardee[] = [];
 
                 rows.forEach((row, index) => {
                             const awardee = normalizeImportRow(row, state.awardees.length + index);
-                            const phoneKey = awardee.phone.replace(/\D/g, "");
-                            const duplicate = seenIds.has(awardee.id.toLowerCase()) || (awardee.email && seenEmails.has(awardee.email.toLowerCase())) || (phoneKey && seenPhones.has(phoneKey));
+                            const phoneKeys = phoneKeysForAwardee(awardee);
+                            const duplicate = seenIds.has(awardee.id.toLowerCase()) || (awardee.email && seenEmails.has(awardee.email.toLowerCase())) || phoneKeys.some((phoneKey) => seenPhones.has(phoneKey));
                             if (duplicate) {
                                           duplicates.push({ ...awardee, dataFlag: "Duplicate" });
                                           return;
@@ -87,7 +87,7 @@ export const awardeeService = {
                             imported.push(awardee);
                             seenIds.add(awardee.id.toLowerCase());
                             if (awardee.email) seenEmails.add(awardee.email.toLowerCase());
-                            if (phoneKey) seenPhones.add(phoneKey);
+                            phoneKeys.forEach((phoneKey) => seenPhones.add(phoneKey));
                 });
 
                 state.awardees = [...imported, ...state.awardees];
@@ -112,6 +112,12 @@ export const awardeeService = {
 };
 
 const categories: AwardCategory[] = ["Topper Award", "Gold Merit", "Silver Merit", "Bronze Merit", "Excellence Award"];
+
+function phoneKeysForAwardee(awardee: Awardee) {
+      return [awardee.phone, awardee.parentPhone]
+        .map((phone) => phone.replace(/\D/g, ""))
+        .filter(Boolean);
+}
 
 function categoryFromPercentage(percentage: number): AwardCategory {
       if (percentage >= 99) return "Topper Award";
@@ -178,7 +184,7 @@ function createAwardeeRecord(data: Partial<Awardee>, index: number): Awardee {
 function normalizeImportRow(row: Record<string, unknown>, index: number): Awardee {
       const name = readCell(row, ["Awardee Name", "Name", "Student Name", "Candidate Name", "Full Name", "Applicant Name"]);
       const email = readCell(row, ["Email ID", "Email", "Email Address", "Mail ID", "E-mail", "Student Email"]);
-      const phone = readCell(row, ["Phone Number", "Phone", "Mobile", "Mobile Number", "Contact Number", "Contact No", "Phone No", "Student Mobile", "Student Phone", "Whatsapp Number", "WhatsApp No", "PH NUMBER1"]);
+      const phone = readCell(row, ["Phone Number", "Phone", "Mobile", "Mobile Number", "Contact Number", "Contact No", "Phone No", "Student Mobile", "Student Phone", "Whatsapp Number", "WhatsApp No", "PH NUMBER1", "Phone 1", "Phone Number 1", "Mobile 1", "Mobile Number 1", "Primary Phone"]);
       const id = readCell(row, ["Hall Ticket Number", "Hall Ticket No", "Hallticket Number", "Student ID", "Application ID", "Unique ID", "ID", "Roll Number", "Roll No", "Registration Number", "Reg No"]) || `HU-2026-IMP-${String(index + 1).padStart(4, "0")}`;
       const rawPercentage = Number(readCell(row, ["Percentage", "%", "Marks Percentage", "Aggregate", "Score", "CGPA", "Marks"])) || 0;
             const percentage = rawPercentage > 100 ? rawPercentage / 10 : rawPercentage;
@@ -204,7 +210,7 @@ function normalizeImportRow(row: Record<string, unknown>, index: number): Awarde
           parentsCount: Number(readCell(row, ["Number of Parents", "Parents", "Parents Count", "Parent Count", "No of Parents", "No. of Parents", "Family Members", "Family Members Attended", "No of Family Members", "No. of Family Members"])) || 0,
           guestsCount: Number(readCell(row, ["Number of Guests", "Guests", "Guests Count", "Guest Count", "No of Guests", "No. of Guests", "Others Count", "Other Members"])) || 0,
           parentName: readCell(row, ["Parent Name", "Guardian Name", "Father Name", "Mother Name", "Father/Mother Name", "Parent/Guardian Name"]),
-          parentPhone: readCell(row, ["Parent Phone Number", "Parent Phone", "Guardian Phone", "Parent Mobile", "Guardian Mobile", "Father Mobile", "Mother Mobile", "Parent Contact Number", "PH NUMBER2"]),
+          parentPhone: readCell(row, ["Parent Phone Number", "Parent Phone", "Guardian Phone", "Parent Mobile", "Guardian Mobile", "Father Mobile", "Mother Mobile", "Parent Contact Number", "PH NUMBER2", "Phone 2", "Phone Number 2", "Mobile 2", "Mobile Number 2", "Alternate Phone", "Alternative Phone", "Secondary Phone", "Second Phone", "Whatsapp Number 2", "WhatsApp No 2"]),
           address: readCell(row, ["Address", "Full Address", "Residential Address", "Permanent Address", "Communication Address", "Student Address", "Village Address", "Location"]),
           remarks: readCell(row, ["Remarks", "Notes", "Comments", "Remark"]),
           checkedInBy: readCell(row, ["Registered By", "Checked-in By", "Checked In By", "Check In By"]) || undefined,

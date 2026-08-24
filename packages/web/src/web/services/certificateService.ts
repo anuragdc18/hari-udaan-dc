@@ -14,9 +14,7 @@ async function postAwardee(url: string, payload?: Record<string, unknown>): Prom
 export const certificateService = {
       async issue(id: string, payload: { issuedBy: string; remarks?: string }): Promise<Awardee> {
               try {
-                        const awardee = await postAwardee(`/api/certificates/${encodeURIComponent(id)}/issue`, payload);
-                        await syncSharedAwardee(awardee);
-                        return awardee;
+                        return await postAwardee(`/api/certificates/${encodeURIComponent(id)}/issue`, payload);
               } catch {
                         const state = await readSharedCrmState();
                         const index = state.awardees.findIndex((awardee) => awardee.id === id);
@@ -38,9 +36,7 @@ export const certificateService = {
 
       async revoke(id: string): Promise<Awardee> {
               try {
-                        const awardee = await postAwardee(`/api/certificates/${encodeURIComponent(id)}/revoke`);
-                        await syncSharedAwardee(awardee);
-                        return awardee;
+                        return await postAwardee(`/api/certificates/${encodeURIComponent(id)}/revoke`);
               } catch {
                         const state = await readSharedCrmState();
                         const index = state.awardees.findIndex((awardee) => awardee.id === id);
@@ -57,17 +53,3 @@ export const certificateService = {
       },
 };
 
-async function syncSharedAwardee(awardee: Awardee): Promise<void> {
-      try {
-              const state = await readSharedCrmState();
-              const index = state.awardees.findIndex((item) => item.id === awardee.id);
-              if (index === -1) {
-                        state.awardees = [awardee, ...state.awardees];
-              } else {
-                        state.awardees[index] = awardee;
-              }
-              await writeSharedCrmState(state);
-      } catch (error) {
-              console.warn("Could not sync certificate state to shared Supabase row.", error);
-      }
-}

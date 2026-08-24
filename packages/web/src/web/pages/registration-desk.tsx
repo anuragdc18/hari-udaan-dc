@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { RegBadge, CategoryBadge } from "@/components/badges";
 import { useToast } from "@/components/ui/toast";
 import { getCurrentUser } from "@/lib/session";
+import { awardeeMatchesQuery } from "@/lib/awardee-search";
 import { awardeeService } from "@/services/awardeeService";
 import { registrationService } from "@/services/registrationService";
 import { fmtDate, fmtTime } from "@/lib/format";
@@ -51,14 +52,8 @@ export default function RegistrationDesk() {
     }, []);
 
   const results = React.useMemo(() => {
-    const ql = q.toLowerCase().trim();
-    if (!ql) return awardees.slice(0, 6);
-    const qDigits = q.replace(/\D/g, "");
-        return awardees.filter((a) => {
-                const phoneDigits = a.phone.replace(/\D/g, "");
-                const parentPhoneDigits = (a.parentPhone || "").replace(/\D/g, "");
-                return a.name.toLowerCase().includes(ql) || a.id.toLowerCase().includes(ql) || a.email.toLowerCase().includes(ql) || (qDigits.length > 0 && (phoneDigits.includes(qDigits) || parentPhoneDigits.includes(qDigits)));
-        }).slice(0, 8);
+    if (!q.trim()) return awardees.slice(0, 6);
+    return awardees.filter((a) => awardeeMatchesQuery(a, q)).slice(0, 8);
   }, [awardees, q]);
 
   function selectAwardee(a: Awardee) {
@@ -171,7 +166,8 @@ export default function RegistrationDesk() {
               {/* read-only details */}
               <div className="grid grid-cols-1 gap-3 py-4 sm:grid-cols-2">
                 <Mini icon={GraduationCap} label="College" value={selected.college} />
-                <Mini icon={Phone} label="Phone" value={selected.phone} />
+                <Mini icon={Phone} label="Student Phone" value={selected.phone} />
+                <Mini icon={Phone} label="Parent Phone" value={selected.parentPhone} />
                 <Mini icon={Mail} label="Email" value={selected.email} />
                 <Mini icon={MapPin} label="District" value={selected.district} />
               </div>

@@ -11,6 +11,7 @@ interface CrmStore {
 
 const storePath = path.resolve(process.cwd(), ".data", "crm-store.json");
 const stateId = "hari-udaan-2026";
+const awardeesTable = "crm_awardees";
 
 function emptyStore(): CrmStore {
       return { awardees: [], users: [], credentials: {} };
@@ -63,16 +64,33 @@ async function ensureStore(): Promise<CrmStore> {
 }
 
 export async function listAwardees() {
+      if (supabaseAdminEnabled && supabase) {
+              const { data, error } = await supabase
+                .from(awardeesTable)
+                .select("data")
+                .order("created_at", { ascending: false });
+              if (!error) return (data ?? []).map((row) => row.data as Awardee);
+      }
+
       return (await ensureStore()).awardees;
 }
 
 export async function getAwardee(id: string) {
+      if (supabaseAdminEnabled && supabase) {
+              const { data, error } = await supabase
+                .from(awardeesTable)
+                .select("data")
+                .eq("id", id)
+                .maybeSingle();
+              if (!error) return (data?.data as Awardee | undefined) ?? undefined;
+      }
+
       return (await ensureStore()).awardees.find((awardee) => awardee.id === id);
 }
 
 export async function createAwardee(data: Partial<Awardee>) {
-      const store = await ensureStore();
-      const id = data.id?.trim() || `HU-2026-${String(store.awardees.length + 1001).padStart(4, "0")}`;
+      const existingAwardees = await listAwardees();
+      const id = data.id?.trim() || `HU-2026-${String(existingAwardees.length + 1001).padStart(4, "0")}`;
       const awardee: Awardee = {
               id,
               name: data.name?.trim() || "Unnamed Awardee",
@@ -101,18 +119,58 @@ export async function createAwardee(data: Partial<Awardee>) {
               createdAt: new Date().toISOString(),
       };
 
+      if (supabaseAdminEnabled && supabase) {
+              await upsertAwardeeRow(awardee);
+              return awardee;
+      }
+
+      const store = await ensureStore();
   store.awardees.unshift(awardee);
       await saveStore(store);
       return awardee;
 }
 
 export async function updateAwardee(id: string, patch: Partial<Awardee>) {
+      if (supabaseAdminEnabled && supabase) {
+              const current = await getAwardee(id);
+              if (!current) return null;
+              const updated = { ...current, ...patch };
+              await upsertAwardeeRow(updated);
+              return updated;
+      }
+
       const store = await ensureStore();
       const index = store.awardees.findIndex((awardee) => awardee.id === id);
       if (index === -1) return null;
       store.awardees[index] = { ...store.awardees[index], ...patch };
       await saveStore(store);
       return store.awardees[index];
+}
+
+export async function removeAwardee(id: string) {
+      if (supabaseAdminEnabled && supabase) {
+              const { error } = await supabase.from(awardeesTable).delete().eq("id", id);
+              if (error) throw error;
+              return;
+      }
+
+      const store = await ensureStore();
+      store.awardees = store.awardees.filter((awardee) => awardee.id !== id);
+      await saveStore(store);
+}
+
+async function upsertAwardeeRow(awardee: Awardee) {
+      if (!supabase) return;
+      const { error } = await supabase
+        .from(awardeesTable)
+        .upsert({ id: awardee.id, data: awardee, updated_at: new Date().toISOString() });
+      if (error) throw error;
+}
+
+function phoneKeysForAwardee(awardee: Awardee) {
+      return [awardee.phone, awardee.parentPhone]
+        .map((phone) => phone.replace(/\D/g, ""))
+        .filter(Boolean);
 }
 
 const categories: AwardCategory[] = ["Topper Award", "Gold Merit", "Silver Merit", "Bronze Merit", "Excellence Award"];
@@ -150,7 +208,7 @@ function readCell(row: Record<string, unknown>, names: string[]) {
 function normalizeImportRow(row: Record<string, unknown>, index: number): Awardee {
       const name = readCell(row, ["Awardee Name", "Name", "Student Name", "Candidate Name", "Full Name", "Applicant Name"]);
       const email = readCell(row, ["Email ID", "Email", "Email Address", "Mail ID", "E-mail", "Student Email"]);
-      const phone = readCell(row, ["Phone Number", "Phone", "Mobile", "Mobile Number", "Contact Number", "Contact No", "Phone No", "Student Mobile", "Student Phone", "Whatsapp Number", "WhatsApp No"]);
+      const phone = readCell(row, ["Phone Number", "Phone", "Mobile", "Mobile Number", "Contact Number", "Contact No", "Phone No", "Student Mobile", "Student Phone", "Whatsapp Number", "WhatsApp No", "Phone 1", "Phone Number 1", "Mobile 1", "Mobile Number 1", "Primary Phone"]);
       const id = readCell(row, ["Hall Ticket Number", "Hall Ticket No", "Hallticket Number", "Student ID", "Application ID", "Unique ID", "ID", "Roll Number", "Roll No", "Registration Number", "Reg No"]) || `HU-2026-IMP-${String(index + 1).padStart(4, "0")}`;
       const percentage = Number(readCell(row, ["Percentage", "%", "Marks Percentage", "Aggregate", "Score", "CGPA"])) || 0;
       const categoryValue = readCell(row, ["Award Category", "Category", "Award", "Award Type"]);
@@ -178,7 +236,7 @@ function normalizeImportRow(row: Record<string, unknown>, index: number): Awarde
           parentsCount,
           guestsCount,
           parentName: readCell(row, ["Parent Name", "Guardian Name", "Father Name", "Mother Name", "Father/Mother Name", "Parent/Guardian Name"]),
-          parentPhone: readCell(row, ["Parent Phone Number", "Parent Phone", "Guardian Phone", "Parent Mobile", "Guardian Mobile", "Father Mobile", "Mother Mobile", "Parent Contact Number"]),
+          parentPhone: readCell(row, ["Parent Phone Number", "Parent Phone", "Guardian Phone", "Parent Mobile", "Guardian Mobile", "Father Mobile", "Mother Mobile", "Parent Contact Number", "Phone 2", "Phone Number 2", "Mobile 2", "Mobile Number 2", "Alternate Phone", "Alternative Phone", "Secondary Phone", "Second Phone", "Whatsapp Number 2", "WhatsApp No 2"]),
           address: readCell(row, ["Address", "Full Address", "Residential Address", "Permanent Address", "Communication Address", "Student Address", "Village Address", "Location"]),
           remarks: readCell(row, ["Remarks", "Notes", "Comments", "Remark"]),
           checkedInBy: readCell(row, ["Registered By", "Checked-in By", "Checked In By", "Check In By"]) || undefined,
@@ -191,17 +249,17 @@ function normalizeImportRow(row: Record<string, unknown>, index: number): Awarde
 }
 
 export async function importAwardees(rows: Array<Record<string, unknown>>) {
-      const store = await ensureStore();
-      const seenIds = new Set(store.awardees.map((awardee) => awardee.id.toLowerCase()));
-      const seenEmails = new Set(store.awardees.map((awardee) => awardee.email.toLowerCase()).filter(Boolean));
-      const seenPhones = new Set(store.awardees.map((awardee) => awardee.phone.replace(/\D/g, "")).filter(Boolean));
+      const existingAwardees = await listAwardees();
+      const seenIds = new Set(existingAwardees.map((awardee) => awardee.id.toLowerCase()));
+      const seenEmails = new Set(existingAwardees.map((awardee) => awardee.email.toLowerCase()).filter(Boolean));
+      const seenPhones = new Set(existingAwardees.flatMap(phoneKeysForAwardee));
       const imported: Awardee[] = [];
       const duplicates: Awardee[] = [];
 
   rows.forEach((row, index) => {
-          const awardee = normalizeImportRow(row, store.awardees.length + index);
-          const phoneKey = awardee.phone.replace(/\D/g, "");
-          const isDuplicate = seenIds.has(awardee.id.toLowerCase()) || (awardee.email && seenEmails.has(awardee.email.toLowerCase())) || (phoneKey && seenPhones.has(phoneKey));
+          const awardee = normalizeImportRow(row, existingAwardees.length + index);
+          const phoneKeys = phoneKeysForAwardee(awardee);
+          const isDuplicate = seenIds.has(awardee.id.toLowerCase()) || (awardee.email && seenEmails.has(awardee.email.toLowerCase())) || phoneKeys.some((phoneKey) => seenPhones.has(phoneKey));
 
                    if (isDuplicate) {
                              duplicates.push({ ...awardee, dataFlag: "Duplicate" });
@@ -211,9 +269,25 @@ export async function importAwardees(rows: Array<Record<string, unknown>>) {
                    imported.push(awardee);
           seenIds.add(awardee.id.toLowerCase());
           if (awardee.email) seenEmails.add(awardee.email.toLowerCase());
-          if (phoneKey) seenPhones.add(phoneKey);
+          phoneKeys.forEach((phoneKey) => seenPhones.add(phoneKey));
   });
 
+  if (supabaseAdminEnabled && supabase) {
+          for (let index = 0; index < imported.length; index += 500) {
+                  const chunk = imported.slice(index, index + 500).map((awardee) => ({
+                          id: awardee.id,
+                          data: awardee,
+                          updated_at: new Date().toISOString(),
+                  }));
+                  if (chunk.length) {
+                          const { error } = await supabase.from(awardeesTable).upsert(chunk);
+                          if (error) throw error;
+                  }
+          }
+          return { imported, duplicates };
+  }
+
+  const store = await ensureStore();
   store.awardees = [...imported, ...store.awardees];
       await saveStore(store);
       return { imported, duplicates };

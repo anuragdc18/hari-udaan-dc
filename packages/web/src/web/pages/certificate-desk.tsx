@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RegBadge, CertBadge, CategoryBadge } from "@/components/badges";
 import { useToast } from "@/components/ui/toast";
 import { getCurrentUser } from "@/lib/session";
+import { awardeeMatchesQuery } from "@/lib/awardee-search";
 import { awardeeService } from "@/services/awardeeService";
 import { certificateService } from "@/services/certificateService";
 import { fmtDate, fmtTime } from "@/lib/format";
@@ -43,9 +44,8 @@ export default function CertificateDesk() {
     }, []);
 
   const results = React.useMemo(() => {
-    const ql = q.toLowerCase().trim();
-    if (!ql) return awardees.filter((a) => a.registrationStatus === "Registered").slice(0, 6);
-    return awardees.filter((a) => a.name.toLowerCase().includes(ql) || a.id.toLowerCase().includes(ql) || a.phone.includes(ql) || a.email.toLowerCase().includes(ql)).slice(0, 8);
+    if (!q.trim()) return awardees.filter((a) => a.registrationStatus === "Registered").slice(0, 6);
+    return awardees.filter((a) => awardeeMatchesQuery(a, q)).slice(0, 8);
   }, [awardees, q]);
 
   const notRegistered = selected && editForm.registrationStatus !== "Registered";

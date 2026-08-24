@@ -14,9 +14,7 @@ async function postAwardee(url: string, payload?: Partial<Awardee>): Promise<Awa
 export const registrationService = {
       async markRegistered(id: string, payload: Partial<Awardee>): Promise<Awardee> {
               try {
-                        const awardee = await postAwardee(`/api/registration/${encodeURIComponent(id)}/check-in`, payload);
-                        await syncSharedAwardee(awardee);
-                        return awardee;
+                        return await postAwardee(`/api/registration/${encodeURIComponent(id)}/check-in`, payload);
               } catch {
                         return updateSharedAwardee(id, {
                                     ...payload,
@@ -29,9 +27,7 @@ export const registrationService = {
 
       async saveDraft(id: string, payload: Partial<Awardee>): Promise<Awardee> {
               try {
-                        const awardee = await postAwardee(`/api/registration/${encodeURIComponent(id)}/draft`, payload);
-                        await syncSharedAwardee(awardee);
-                        return awardee;
+                        return await postAwardee(`/api/registration/${encodeURIComponent(id)}/draft`, payload);
               } catch {
                         return updateSharedAwardee(id, payload);
               }
@@ -51,17 +47,3 @@ async function updateSharedAwardee(id: string, payload: Partial<Awardee>): Promi
       return state.awardees[index];
 }
 
-async function syncSharedAwardee(awardee: Awardee): Promise<void> {
-      try {
-              const state = await readSharedCrmState();
-              const index = state.awardees.findIndex((item) => item.id === awardee.id);
-              if (index === -1) {
-                        state.awardees = [awardee, ...state.awardees];
-              } else {
-                        state.awardees[index] = awardee;
-              }
-              await writeSharedCrmState(state);
-      } catch (error) {
-              console.warn("Could not sync registration state to shared Supabase row.", error);
-      }
-}

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useLocation } from "wouter";
 import { Search, CornerDownLeft, GraduationCap } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/constants";
+import { awardeeMatchesQuery } from "@/lib/awardee-search";
 import { awardeeService } from "@/services/awardeeService";
 import type { Awardee } from "@/types";
 import { Icon } from "./shared";
@@ -35,13 +36,7 @@ export function CommandSearch({ open, onClose }: { open: boolean; onClose: () =>
   const ql = q.toLowerCase().trim();
   const pages = NAV_ITEMS.filter((n) => n.label.toLowerCase().includes(ql));
   const awardees = ql
-    ? items.filter(
-        (a) =>
-          a.name.toLowerCase().includes(ql) ||
-          a.id.toLowerCase().includes(ql) ||
-          a.phone.includes(ql) ||
-          a.district.toLowerCase().includes(ql),
-      ).slice(0, 6)
+    ? items.filter((a) => awardeeMatchesQuery(a, q)).slice(0, 6)
     : [];
 
   function go(path: string) {

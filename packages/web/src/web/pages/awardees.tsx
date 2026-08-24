@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { DataTable, type Column } from "@/components/data-table";
 import { RegBadge, CertBadge, CategoryBadge, FlagBadge } from "@/components/badges";
+import { awardeeMatchesQuery } from "@/lib/awardee-search";
 import { DISTRICTS, AWARD_CATEGORIES } from "@/lib/constants";
 import { awardeeService } from "@/services/awardeeService";
 import type { Awardee } from "@/types";
@@ -34,6 +35,8 @@ export default function Awardees() {
     district: "",
     registrationStatus: "Pending",
     certificateStatus: "Pending",
+    parentName: "",
+    parentPhone: "",
     remarks: "",
   });
 
@@ -109,6 +112,8 @@ export default function Awardees() {
       district: awardee.district,
       registrationStatus: awardee.registrationStatus,
       certificateStatus: awardee.certificateStatus,
+      parentName: awardee.parentName,
+      parentPhone: awardee.parentPhone,
       remarks: awardee.remarks,
     });
     setManageOpen(true);
@@ -145,9 +150,8 @@ export default function Awardees() {
   }
 
   const filtered = React.useMemo(() => {
-    const ql = q.toLowerCase().trim();
     return awardees.filter((a) => {
-      if (ql && !(a.name.toLowerCase().includes(ql) || a.id.toLowerCase().includes(ql) || a.phone.includes(ql) || a.email.toLowerCase().includes(ql) || a.college.toLowerCase().includes(ql))) return false;
+      if (q.trim() && !awardeeMatchesQuery(a, q)) return false;
       if (district && a.district !== district) return false;
       if (category && a.awardCategory !== category) return false;
       if (reg && a.registrationStatus !== reg) return false;
@@ -168,7 +172,7 @@ export default function Awardees() {
         </div>
       ),
     },
-    { key: "phone", header: "Contact", className: "hidden xl:table-cell", render: (a) => <div><p className="text-[13px]">{a.phone}</p><p className="text-[12px] text-muted-foreground">{a.email}</p></div> },
+    { key: "phone", header: "Contact", className: "hidden xl:table-cell", render: (a) => <div><p className="text-[13px]">{a.phone}</p><p className="text-[12px] text-muted-foreground">{a.parentPhone || a.email}</p></div> },
     { key: "college", header: "College", className: "hidden lg:table-cell", render: (a) => <div><p className="truncate text-[13px] font-medium">{a.college}</p><p className="text-[12px] text-muted-foreground">{a.course}</p></div> },
     { key: "percentage", header: "%", sortable: true, sortValue: (a) => a.percentage, render: (a) => <span className="font-display font-semibold tabular-nums">{a.percentage}</span> },
     { key: "category", header: "Award", className: "hidden sm:table-cell", render: (a) => <CategoryBadge category={a.awardCategory} /> },
@@ -205,7 +209,7 @@ export default function Awardees() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, ID, phone, email, college…" className="pl-10" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, ID, either phone, email, college…" className="pl-10" />
           </div>
           <div className="grid grid-cols-2 gap-2.5 lg:flex">
             <Select value={district} onChange={(e) => setDistrict(e.target.value)} className="lg:w-40"><option value="">All Districts</option>{DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}</Select>
@@ -244,6 +248,8 @@ export default function Awardees() {
           <div><Label>Name</Label><Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} /></div>
           <div><Label>Phone</Label><Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} /></div>
           <div><Label>Email</Label><Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+          <div><Label>Parent Name</Label><Input value={editForm.parentName} onChange={(e) => setEditForm({ ...editForm, parentName: e.target.value })} /></div>
+          <div><Label>Parent Phone</Label><Input value={editForm.parentPhone} onChange={(e) => setEditForm({ ...editForm, parentPhone: e.target.value })} /></div>
           <div><Label>District</Label><Input value={editForm.district} onChange={(e) => setEditForm({ ...editForm, district: e.target.value })} /></div>
           <div><Label>College</Label><Input value={editForm.college} onChange={(e) => setEditForm({ ...editForm, college: e.target.value })} /></div>
           <div><Label>Course</Label><Input value={editForm.course} onChange={(e) => setEditForm({ ...editForm, course: e.target.value })} /></div>
